@@ -13,7 +13,6 @@
     </ul>
     <ul class="list-group list-group-horizontal justify-content-center">
       {% if user.is_authenticated and request.user == profile_user %}
-      <!-- ИСПРАВЛЕНО: используем пространство имен 'users:' и передаем username -->
       <a class="btn btn-sm text-muted" href="{% url 'users:edit_profile' username=profile_user.username %}">
         Редактировать профиль
       </a>
@@ -23,10 +22,15 @@
   </small>
   <br>
   <h3 class="mb-5 text-center">Публикации пользователя</h3>
-  {% for post in page_obj %}
-    <article class="mb-5">
-      {% include "includes/post_card.html" %}
-    </article>
-  {% endfor %}
-  {% include "includes/paginator.html" %}
+  
+  {% if page_obj %}
+    {% for post in page_obj %}
+      <article class="mb-5">
+        {% include "includes/post_card.html" %}
+      </article>
+    {% endfor %}
+    {% include "includes/paginator.html" %}
+  {% else %}
+    <p class="text-center text-muted">Публикаций пока нет.</p>
+  {% endif %}
 {% endblock %}

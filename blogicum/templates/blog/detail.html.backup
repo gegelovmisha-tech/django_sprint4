@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block title %}
+{{ post.title }}
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+<!-- Форма для добавления нового комментария (только если не редактируем) -->
+    {% if not editing_comment and user.is_authenticated and not confirm_delete_comment %}
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5>Добавить комментарий</h5>
+          <form method="post" action="{% url 'blog:add_comment' post.id %}">
+            {% csrf_token %}
+            {% bootstrap_form comment_form %}
+            <button type="submit" class="btn btn-primary">Отправить</button>
+          </form>
+        </div>
+      </div>
+    
+
+  <article>
+    <h1>{{ post.title }}</h1>
+    
+    {% if post.image %}
+      <img src="{{ post.image.url }}" class="img-fluid mb-3" alt="{{ post.title }}">
+    {% endif %}
+    
+    <p>{{ post.text|linebreaksbr }}</p>
+    
+    <div class="mb-4">
+      <small class="text-muted">
+        {{ post.pub_date|date:"d E Y, H:i" }} | 
+        {% if post.location and post.location.is_published %}{{ post.location.name }}{% else %}Планета Земля{% endif %} | 
+        Автор: <a href="{% url 'blog:profile' post.author.username %}">{{ post.author.username }}</a> | 
+        Категория: <a href="{% url 'blog:category_posts' post.category.slug %}">{{ post.category.title }}</a>
+      </small>
+      
+      {% if user == post.author %}
+        <div class="mt-2">
+          <a href="{% url 'blog:post_edit' post.id %}" class="btn btn-sm btn-outline-primary">Редактировать пост</a>
+          <a href="{% url 'blog:post_delete' post.id %}" class="btn btn-sm btn-outline-danger">Удалить пост</a>
+        </div>
+      {% endif %}
+    </div>
+  </article>
+
+  <hr>
+  
+  <div class="mt-5">
+    <h4>Комментарии ({{ comments.count }})</h4>
+    
+    {% for comment in comments %}
+      <div class="card mb-3">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">
+            <strong>@{{ comment.author.username }}</strong>
+            <small>{{ comment.created_at|date:"d.m.Y H:i" }}</small>
+          </h6>
+          
+          <!-- Если редактируем этот комментарий, показываем форму -->
+          {% if editing_comment and editing_comment.id == comment.id %}
+            <form method="post" action="{% url 'blog:edit_comment' post.id comment.id %}">
+              {% csrf_token %}
+              {% bootstrap_form comment_form %}
+              <button type="submit" class="btn btn-primary">Сохранить</button>
+              <a href="{% url 'blog:post_detail' post.id %}" class="btn btn-secondary">Отмена</a>
+            </form>
+          {% else %}
+            <!-- Обычный комментарий -->
+            <p class="card-text">{{ comment.text|linebreaksbr }}</p>
+            
+            {% if user == comment.author %}
+              <div class="mt-2">
+                <a href="{% url 'blog:edit_comment' post.id comment.id %}" class="btn btn-sm btn-outline-primary">Редактировать</a>
+                
+                <a href="{% url 'blog:delete_comment' post.id comment.id %}" class="btn btn-sm btn-outline-danger">Удалить</a>
+              </div>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <p>Пока нет комментариев.</p>
+    {% endfor %}
+    
+    <!-- ФОРМА КОММЕНТАРИЕВ ПЕРЕМЕЩЕНА В НАЧАЛО -->{% elif not user.is_authenticated %}
+      <p><a href="{% url 'login' %}">Войдите</a>, чтобы оставить комментарий.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
